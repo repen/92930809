@@ -44,6 +44,7 @@ def wrapper_run(*args, **kwargs):
 
 
 
+
 def save( data ):
     data = sorted( data, key=lambda x : x[1])
     res = [comma(x[0]) for x in data]
@@ -57,7 +58,7 @@ def _main():
     q = SimpleQueue()
     data = get_data()
     processes = []
- 
+
     for e, func in enumerate( functions , start=1):
         processes.append( Process(target=wrapper_run, args =  (q, func, data, e ) ) )
 
@@ -72,6 +73,9 @@ def _main():
     save( results )
 
 
+def main():
+    _main()
+
 def work():
     while True:
         try:
@@ -82,9 +86,6 @@ def work():
             log.info("Sleep {}".format(TIMEOUT))
             time.sleep( TIMEOUT )
 
-
-def main():
-    _main()
 
 if __name__ == '__main__':
     # main()
