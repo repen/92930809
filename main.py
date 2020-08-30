@@ -25,23 +25,23 @@ def get_data():
         return response.json()
     raise ValueError
 
-def init_wrapper(*args, **kwargs):
+def wrapper_run(*args, **kwargs):
     queue    = args[0]
     function = args[1]
     data = args[2]
     index  = args[3]
-    def wrapper(*args, **kwargs):
 
-        start_time = time.time()
-        
-        res = function(data)
 
-        end_time = time.time()
-        end_time = end_time - start_time
+    start_time = time.time()
+    
+    res = function(data)
 
-        log.info( "Run time: {:.10f} sec for function {}".format( end_time, index ) )
-        queue.put( ( res, index ) )
-    return wrapper
+    end_time = time.time()
+    end_time = end_time - start_time
+
+    log.info( "Run time: {:.10f} sec for function {}".format( end_time, index ) )
+    queue.put( ( res, index ) )
+
 
 def save( data ):
     data = sorted( data, key=lambda x : x[1])
@@ -55,10 +55,11 @@ def save( data ):
 def _main():
     q = SimpleQueue()
     data = get_data()
-    objs = []
+    processes = []
+
     for e, func in enumerate( functions , start=1):
-        objs.append( init_wrapper( q, func, data, e ) )
-    processes = [ Process(target=x) for x in objs ]
+        processes.append( Process(target=wrapper_run, args=(q, func, data, e) ) )
+
     [x.start() for x in processes]
     [x.join() for x in processes]
     results = []
@@ -70,6 +71,9 @@ def _main():
     save( results )
 
 
+def main():
+    _main()
+
 def work():
     while True:
         try:
@@ -80,9 +84,6 @@ def work():
             log.info("Sleep {}".format(TIMEOUT))
             time.sleep( TIMEOUT )
 
-
-def main():
-    _main()
 
 if __name__ == '__main__':
     # main()
