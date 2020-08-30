@@ -77,7 +77,7 @@ def work():
         except Exception as Er:
             log.error("Error {}".format(str(Er)) ,exc_info=True)
         finally:
-            log.info("Sleep: {}".format(TIMEOUT))
+            log.info("Sleep {}".format(TIMEOUT))
             time.sleep( TIMEOUT )
 
 
@@ -85,5 +85,5 @@ def main():
     _main()
 
 if __name__ == '__main__':
-    main()
-    # work()
+    # main()
+    work()
