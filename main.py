@@ -1,8 +1,11 @@
 import configparser
 import requests, time
 from multiprocessing import Process, SimpleQueue
+from threading import Thread
+from queue import Queue
 from tools import log as lo
 from custom import functions
+# from Cython import nogil
 
 
 log = lo("Main", "main.log")
@@ -55,12 +58,13 @@ def save( data ):
 
 
 def _main():
-    q = SimpleQueue()
+    q = Queue()
     data = get_data()
     processes = []
 
+    # with nogil:
     for e, func in enumerate( functions , start=1):
-        processes.append( Process(target=wrapper_run, args =  (q, func, data, e ) ) )
+        processes.append( Thread(target=wrapper_run, args =  (q, func, data, e ) ) )
 
     [x.start() for x in processes]
     [x.join() for x in processes]
@@ -81,7 +85,7 @@ def work():
         try:
             main()
         except Exception as Er:
-            log.error("Error {}".format(str(Er)) ,exc_info=True)
+            log.error("Error {}".format(str(Er)), exc_info=True)
         finally:
             log.info("Sleep {}".format(TIMEOUT))
             time.sleep( TIMEOUT )
