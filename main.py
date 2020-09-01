@@ -1,29 +1,58 @@
-import configparser
-import requests, time
-from multiprocessing import Process, SimpleQueue
+import configparser, time
+from requests.auth import AuthBase
 from threading import Thread
 from queue import Queue
 from tools import log as lo
 from custom import functions
-# from Cython import nogil
-
-
-log = lo("Main", "main.log")
+from tools import generate_signature
+import requests
 config = configparser.ConfigParser()
 config.read('setting.conf')
 
 args = config['site']
 URL  = args['url']
 PATH = args['result_path']
+NAME = args['name']
 TIMEOUT = int( args['timeout'] )
+
+log = lo( NAME, "main.log")
 
 def comma(float):
     res = "{}".format( float )
     res = res.replace(".",",")
     return res
 
+class APIKeyAuthWithExpires(AuthBase):
+
+    """Attaches API Key Authentication to the given Request object. This implementation uses `expires`."""
+
+    def __init__(self, apiKey, apiSecret):
+        """Init with Key & Secret."""
+        self.apiKey = apiKey
+        self.apiSecret = apiSecret
+
+    def __call__(self, r):
+        """
+        Called when forming a request - generates api key headers. This call uses `expires` instead of nonce.
+        This way it will not collide with other processes using the same API Key if requests arrive out of order.
+        For more details, see https://www.bitmex.com/app/apiKeys
+        """
+        # modify and return the request
+        expires = int(round(time.time()) + 5)  # 5s grace period in case of clock skew
+        r.headers['api-expires'] = str(expires)
+        r.headers['api-key'] = self.apiKey
+        r.headers['api-signature'] = generate_signature(self.apiSecret, r.method, r.url, expires, r.body or '')
+        return r
+
 def get_data():
-    response = requests.get( URL )
+    apiKey    = "hc_q3pDXXV4N3iIWQw6US27o"
+    apiKey    = "Lj1Ows71OdYO9P4W6OjdPpk7"
+    apiSecret = "hT-vagXM1xNMB4jrxRH75svQMAlegMsxX36lNcaV3JJl82Vk"
+    apiSecret = "ETC4AYMoDHpoS44JgSN2WOfe1-5Ym4TKcRTCmKyPb2EZsRAl"
+    
+    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret))
+
+    log.info( "Response {} limit: {}".format( response, response.headers["X-RateLimit-Remaining"] ) )
     if response.status_code == 200:
         return response.json()
     raise ValueError
@@ -62,7 +91,6 @@ def _main():
     data = get_data()
     processes = []
 
-    # with nogil:
     for e, func in enumerate( functions , start=1):
         processes.append( Thread(target=wrapper_run, args =  (q, func, data, e ) ) )
 
@@ -90,7 +118,15 @@ def work():
             log.info("Sleep {}".format(TIMEOUT))
             time.sleep( TIMEOUT )
 
+def test():
+    z = 0
+    while True:
+        data = get_data()
+        functions[-1](data)
+        z += 1
+        time.sleep(0.1)
 
 if __name__ == '__main__':
+    # test()
     # main()
     work()
