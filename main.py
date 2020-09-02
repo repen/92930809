@@ -5,17 +5,19 @@ from threading import Thread
 from queue import Queue
 from tools import log as lo
 from custom import functions
-# from Cython import nogil
 
 
-log = lo("Main", "main.log")
+
 config = configparser.ConfigParser()
 config.read('setting.conf')
 
 args = config['site']
 URL  = args['url']
 PATH = args['result_path']
-TIMEOUT = int( args['timeout'] )
+NAME = args['name']
+TIMEOUT = float( args['timeout'] )
+
+log = lo(NAME, "main.log")
 
 def comma(float):
     res = "{}".format( float )
@@ -62,7 +64,6 @@ def _main():
     data = get_data()
     processes = []
 
-    # with nogil:
     for e, func in enumerate( functions , start=1):
         processes.append( Thread(target=wrapper_run, args =  (q, func, data, e ) ) )
 
