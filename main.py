@@ -13,7 +13,7 @@ args = config['site']
 URL  = args['url']
 PATH = args['result_path']
 NAME = args['name']
-TIMEOUT = int( args['timeout'] )
+TIMEOUT = float( args['timeout'] )
 
 log = lo( NAME, "main.log")
 
