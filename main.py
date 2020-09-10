@@ -45,17 +45,22 @@ class APIKeyAuthWithExpires(AuthBase):
         return r
 
 def get_data():
-    apiKey    = "hc_q3pDXXV4N3iIWQw6US27o"
-    apiKey    = "Lj1Ows71OdYO9P4W6OjdPpk7"
-    apiSecret = "hT-vagXM1xNMB4jrxRH75svQMAlegMsxX36lNcaV3JJl82Vk"
-    apiSecret = "ETC4AYMoDHpoS44JgSN2WOfe1-5Ym4TKcRTCmKyPb2EZsRAl"
-    
-    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret))
+    try:
+        apiKey    = "hc_q3pDXXV4N3iIWQw6US27o"
+        apiKey    = "Lj1Ows71OdYO9P4W6OjdPpk7"
+        apiSecret = "hT-vagXM1xNMB4jrxRH75svQMAlegMsxX36lNcaV3JJl82Vk"
+        apiSecret = "ETC4AYMoDHpoS44JgSN2WOfe1-5Ym4TKcRTCmKyPb2EZsRAl"
 
-    log.info( "Response {} limit: {}".format( response, response.headers["X-RateLimit-Remaining"] ) )
-    if response.status_code == 200:
+        response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
+
+        log.info( "Response {} limit: {}".format( response, response.headers["X-RateLimit-Remaining"] ) )
         return response.json()
-    raise ValueError
+    except Exception as e:
+        log.info("Error connect {}. Wait 5 sec".format( e ))
+        time.sleep(5)
+        return get_data()
+
+
 
 def wrapper_run(*args, **kwargs):
 
