@@ -1,9 +1,10 @@
 import configparser
 import requests, time
-from threading import Thread
 from queue import Queue
 from tools import log as lo
 from custom import functions
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 
 config = configparser.ConfigParser()
@@ -14,6 +15,7 @@ URL  = args['url']
 NAME  = args['name']
 PATH = args['result_path']
 TIMEOUT = float( args['timeout'] )
+WORKER = int( args['worker'] )
 
 log = lo(NAME, "main.log")
 
@@ -60,17 +62,21 @@ def save( data ):
         f.write( string )
     log.info( "Save {} in {}".format( string, PATH ) )
 
+def call(f):
+    f()
 
 def _main():
     q = Queue()
     data = get_data()
-    processes = []
+    freeze = []
 
     for e, func in enumerate( functions , start=1):
-        processes.append( Thread(target=wrapper_run, args =  (q, func, data, e ) ) )
+        freeze.append( partial( wrapper_run, q, func, data, e ) )
 
-    [x.start() for x in processes]
-    [x.join() for x in processes]
+    with ThreadPoolExecutor(max_workers=WORKER) as executor:
+        for _ in executor.map(call, freeze):
+            pass
+
     results = []
     while True:
         items = q.get()
