@@ -23,10 +23,14 @@ def comma(float):
     return res
 
 def get_data():
-    response = requests.get( URL )
-    if response.status_code == 200:
+    try:
+        response = requests.get( URL, timeout=2.001 )
         return response.json()
-    raise ValueError
+    except Exception as e:
+        log.info("Error connect {}. Wait 5 sec".format( e ))
+        time.sleep(5)
+        return get_data()
+
 
 def wrapper_run(*args, **kwargs):
 
