@@ -43,8 +43,11 @@ def wrapper_run(*args, **kwargs):
     index  = args[3]
 
     start_time = time.time()
-    
-    res = function(data)
+    try:
+        res = function(data)
+    except Exception as e:
+        res = 1/2
+        log.error("Error response data {}".format(e), exc_info=True)
 
     end_time = time.time()
     end_time = end_time - start_time
