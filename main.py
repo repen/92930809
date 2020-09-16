@@ -12,11 +12,9 @@ config = configparser.ConfigParser()
 config.read('setting.conf')
 
 args = config['site']
-URL  = args['url']
-PATH = args['result_path']
 NAME = args['name']
-TIMEOUT = float( args['timeout'] )
-WORKER = int( args['worker'] )
+TIMEOUT  = float( args['timeout'] )
+LEVERAGE = float( args['leverage'] )
 
 log = lo( NAME, "main.log")
 
@@ -48,20 +46,44 @@ class APIKeyAuthWithExpires(AuthBase):
         return r
 
 def get_data():
-    try:
-        apiKey    = "hc_q3pDXXV4N3iIWQw6US27o"
-        apiKey    = "Lj1Ows71OdYO9P4W6OjdPpk7"
-        apiSecret = "hT-vagXM1xNMB4jrxRH75svQMAlegMsxX36lNcaV3JJl82Vk"
-        apiSecret = "ETC4AYMoDHpoS44JgSN2WOfe1-5Ym4TKcRTCmKyPb2EZsRAl"
 
-        response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
+    apiKey    = "BBDLor4hAF9Aplqp62oNCK-q"
+    apiSecret = "ay5rZbB_aYeMQ4R9IIbbr777oxL6CdeXVHUTcz6451hY1nX5"
+    URL = "https://testnet.bitmex.com/api/v1/position?filter=%7B%22symbol%22%3A%20%22XBTUSD%22%7D"
+    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
 
-        log.info( "Response {} limit: {}".format( response, response.headers["X-RateLimit-Remaining"] ) )
-        return response.json()
-    except Exception as e:
-        log.info("Error connect {}. Wait 5 sec".format( e ))
-        time.sleep(5)
-        return get_data()
+    log.info( "Response {} limit: {}".format( response, response.headers["X-RateLimit-Remaining"] ) )
+    data = response.json()
+    if not data:
+        log.info("Not data")
+        return
+    
+    data = data[0]
+
+    if data["leverage"] == LEVERAGE:
+        log.info( "Miss. leverage == {}".format( LEVERAGE ) )
+        return
+
+    url = "https://testnet.bitmex.com/api/v1/position/leverage"
+    
+    set_data = "symbol=XBTUSD&leverage={}".format( LEVERAGE )
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+    }
+    
+    response = requests.post( url, 
+        data=set_data, headers=headers, auth=APIKeyAuthWithExpires(apiKey, apiSecret), 
+        timeout=2.001
+    )
+    
+    if response.status_code == 200:
+        log.info( "leverage change! before {} | after {}".format(data["leverage"], LEVERAGE ) )
+    else:
+        log.info( "Bad status code {}.leverage value not setting!".format( response.status_code) )
+    pass
+    # end
 
 
 
@@ -69,8 +91,8 @@ def wrapper_run(*args, **kwargs):
 
     queue    = args[0]
     function = args[1]
-    data = args[2]
-    index  = args[3]
+    data     = args[2]
+    index    = args[3]
 
     start_time = time.time()
     
@@ -83,39 +105,8 @@ def wrapper_run(*args, **kwargs):
     queue.put( ( res, index ) )
 
 
-
-
-def save( data ):
-    data = sorted( data, key=lambda x : x[1])
-    res = [comma(x[0]) for x in data]
-    string = ";".join( res )
-    with open(PATH, "w", encoding="utf8") as f:
-        f.write( string )
-    log.info( "Save {} in {}".format( string, PATH ) )
-
-def call(f):
-    f()
-
 def _main():
-    q = Queue()
     data = get_data()
-    freeze = []
-
-
-    for e, func in enumerate( functions , start=1):
-        freeze.append( partial( wrapper_run, q, func, data, e ) )
-
-    with ThreadPoolExecutor(max_workers=WORKER) as executor:
-        for _ in executor.map(call, freeze):
-            pass
-
-    results = []
-    while True:
-        items = q.get()
-        results.append( items )
-        if q.empty():
-            break
-    save( results )
 
 
 def main():
@@ -125,19 +116,16 @@ def work():
     while True:
         try:
             main()
-        except Exception as Er:
-            log.error("Error {}".format(str(Er)), exc_info=True)
-        finally:
             log.info("Sleep {}".format(TIMEOUT))
             time.sleep( TIMEOUT )
+        except Exception as Er:
+            # log.error("Error connect or work script {}. Wait 5 sec".format( Er ), exc_info=True)
+            log.error("Error connect or work script {}. Wait 5 sec".format( Er ) )
+            time.sleep(5)
+
 
 def test():
-    z = 0
-    while True:
-        data = get_data()
-        functions[-1](data)
-        z += 1
-        time.sleep(0.1)
+    res = get_data()
 
 if __name__ == '__main__':
     # test()

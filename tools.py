@@ -21,7 +21,7 @@ def log(*args, **kwargs):
     ch.setLevel(logging.DEBUG)
 
     # создаём formatter
-    formatter = logging.Formatter('%(asctime)s : line %(lineno)d : %(name)s : %(levelname)s : %(message)s')
+    formatter = logging.Formatter('%(asctime)s : line %(lineno)-3s : %(name)s : %(levelname)s : %(message)s')
     # %(lineno)d :
     # добавляем formatter в ch
     ch.setFormatter(formatter)
