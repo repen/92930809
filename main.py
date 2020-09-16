@@ -1,12 +1,7 @@
 import configparser, time
 from requests.auth import AuthBase
-from threading import Thread
-from queue import Queue
 from tools import log as lo
-from custom import functions
 from tools import generate_signature
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 import requests
 config = configparser.ConfigParser()
 config.read('setting.conf')
@@ -17,11 +12,6 @@ TIMEOUT  = float( args['timeout'] )
 LEVERAGE = float( args['leverage'] )
 
 log = lo( NAME, "main.log")
-
-def comma(float):
-    res = "{}".format( float )
-    res = res.replace(".",",")
-    return res
 
 class APIKeyAuthWithExpires(AuthBase):
 
@@ -85,29 +75,8 @@ def get_data():
     pass
     # end
 
-
-
-def wrapper_run(*args, **kwargs):
-
-    queue    = args[0]
-    function = args[1]
-    data     = args[2]
-    index    = args[3]
-
-    start_time = time.time()
-    
-    res = function(data)
-
-    end_time = time.time()
-    end_time = end_time - start_time
-
-    log.info( "Run time: {:.10f} sec for function {}".format( end_time, index ) )
-    queue.put( ( res, index ) )
-
-
 def _main():
     data = get_data()
-
 
 def main():
     _main()
