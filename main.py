@@ -44,15 +44,11 @@ def get_data():
 
     log.info( "Response {} limit: {}".format( response, response.headers["X-RateLimit-Remaining"] ) )
     data = response.json()
-    if not data:
-        log.info("Not data")
-        return
-    
-    data = data[0]
-
-    if data["leverage"] == LEVERAGE:
-        log.info( "Miss. leverage == {}".format( LEVERAGE ) )
-        return
+    if data:
+        data = data[0]
+        if data["leverage"] == LEVERAGE:
+            log.info( "Miss. leverage == {}".format( LEVERAGE ) )
+            return
 
     url = "https://testnet.bitmex.com/api/v1/position/leverage"
     
