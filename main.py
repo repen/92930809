@@ -12,6 +12,7 @@ args = config['site']
 NAME = args['name']
 TIMEOUT01 = float( args['timeout01'] )
 TIMEOUT02 = float( args['timeout02'] )
+TIMEOUT03 = float( args['timeout03'] )
 FILE01  = args['file01']
 FILE02  = args['file02']
 LEVERAGE  = float( args['leverage'] )
@@ -126,6 +127,14 @@ def get_currentQty():
     currentQty = data[0]['currentQty']
     return currentQty
 
+def get_position():
+    URL = "https://testnet.bitmex.com/api/v1/execution?symbol=XBT%3Aperpetual&columns=%5B%22text%22%5D&count=1&reverse=true"
+    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
+    log.info( "response {}. Url: {}".format( response, URL) )
+    data = response.json()
+    text =  data[0]['text']
+    return text
+
 def script():
     currentQty = get_currentQty()
     
@@ -136,8 +145,23 @@ def script():
         log.info( "Sleep: {}".format( TIMEOUT01 ) )
         return
 
-    log.info( "Sleep: {}".format( TIMEOUT02 ) )
-    time.sleep( TIMEOUT02 )
+    # remove
+    # log.info( "Sleep: {}".format( TIMEOUT02 ) )
+    # time.sleep( TIMEOUT02 )
+    # ==========
+    
+    #new block
+    position = get_position()
+    log.info( "Get_position: {}".format( position ) )
+    if position == "Liquidation":
+        log.info( "Sleep: {}".format( TIMEOUT03 ) )
+        time.sleep(TIMEOUT03)
+    else:
+        log.info( "Sleep: {}".format( TIMEOUT02 ) )
+        time.sleep(TIMEOUT02)
+    # ==========
+
+
     
     # читать файлы с сигналами N 0 -N
     while True:
