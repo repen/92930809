@@ -53,11 +53,18 @@ class APIKeyAuthWithExpires(AuthBase):
         return r
 
 def get_signal(path):
-    with open(path) as f:
-        data = f.read()
-    data = data.strip()
-    result = int(data)
-    log.info( "File: {}. Value: {}".format( path, result ) )
+    while True:
+        with open(path) as f:
+            data = f.read()
+        data = data.strip()
+        try:
+            result = int(data)
+            log.info("File: {}. Value: {}".format(path, result))
+            break
+        except ValueError:
+            log.info("file {} value = {} error. not number.".format(path, data))
+            log.info("file {} reopen".format(path))
+            time.sleep(0.1)
     return result
 
 def set_leverage():
