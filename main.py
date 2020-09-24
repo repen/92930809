@@ -122,6 +122,10 @@ def get_leverage():
     response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
     log.info( "response {}. Url: {}".format( response, URL) )
     data = response.json()
+
+    if not data:
+        return -1
+
     leverage = data[0]['leverage']
     return leverage
 
