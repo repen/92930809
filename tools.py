@@ -88,3 +88,6 @@ class Info:
     def get_num(self):
         index = len( self.plus )
         return float( self.numbers[ index ] )
+
+
+
