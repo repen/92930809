@@ -1,7 +1,7 @@
 import configparser, time, re
 from requests.auth import AuthBase
 from tools import log as lo
-from tools import generate_signature
+from tools import generate_signature, Info
 import requests
 config = configparser.ConfigParser()
 config.read('setting.conf')
@@ -15,6 +15,7 @@ TIMEOUT02 = float( args['timeout02'] )
 TIMEOUT03 = float( args['timeout03'] )
 FILE01  = args['file01']
 FILE02  = args['file02']
+FILEINFO  = args['file_info']
 LEVERAGE  = float( args['leverage'] )
 POLL_TIMEOUT  = float( args['poll_timeout'] )
 
@@ -156,18 +157,22 @@ def script():
         log.info( "Sleep: {}".format( TIMEOUT01 ) )
         return
 
-    # remove
-    # log.info( "Sleep: {}".format( TIMEOUT02 ) )
-    # time.sleep( TIMEOUT02 )
-    # ==========
+
+    info = Info( FILEINFO )
+    log.info("Load file %s \n data: %s", FILEINFO, info)
     
-    #new block
     position = get_position()
     log.info( "Get_position: {}".format( position ) )
     if position == "Liquidation":
         log.info( "Sleep: {}".format( TIMEOUT03 ) )
+        info.clear_plus()
+        info.save()
         time.sleep(TIMEOUT03)
     else:
+        if info.length_plus() == 5:
+            info.clear_plus()
+            info.save()
+
         log.info( "Sleep: {}".format( TIMEOUT02 ) )
         time.sleep(TIMEOUT02)
     # ==========
@@ -191,11 +196,13 @@ def script():
         set_leverage()
         log.info("Set leverage 50")
 
+    Fnum = info.get_num()
 
     if s1 > 0 or s2 > 0:
         log.info("Branch askPrice (signal1 > 0 or signal2 > 0)")
         askPrice   = get_askPrice()
-        orderQty   = int(askPrice * 0.0001 * 47)
+
+        orderQty   = int(askPrice * Fnum * 47)
         order_data = "symbol=XBTUSD&side=Buy&orderQty={}&ordType=Market".format( orderQty )
 
         set_order( order_data )
@@ -211,7 +218,7 @@ def script():
     if s1 < 0 or s2 < 0:
         log.info("Branch bidPrice (signal1 < 0 or signal2 < 0)")
         bidPrice = get_bidPrice()
-        orderQty = int(bidPrice * 0.0002 * 48)
+        orderQty = int(bidPrice * Fnum * 48)
         order_data = "symbol=XBTUSD&side=Sell&orderQty={}&ordType=Market".format( orderQty )
         
         set_order( order_data )
@@ -222,7 +229,9 @@ def script():
         
         set_order( order_data )
         return
-            
+
+    info.add_plus()
+    info.save()
     
     # import pdb;pdb.set_trace()
 
