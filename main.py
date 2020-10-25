@@ -74,12 +74,6 @@ def get_data():
             log.info( "Miss. leverage == %s" % LEVERAGE )
             return
 
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-    }
-    
     response02 = send_signed_request("POST",'/fapi/v1/leverage' , {
             "symbol": "BTCUSDT", 
             "timestamp":get_timestamp(),
