@@ -15,7 +15,7 @@ log = lo( NAME, "main.log")
 
 KEY = ''
 SECRET = ''
-BASE_URL = 'https://fapi.binance.com' # production base url
+BASE_URL = 'https://dapi.binance.com' # production base url
 
 def get_timestamp():
     # 1603616154651
@@ -64,18 +64,22 @@ def send_public_request(url_path, payload={}):
 
 def get_data():
 
-    params = {"symbol" : "BTCUSDT",}
-    response01 = send_signed_request("GET",'/fapi/v2/positionRisk' , {"symbol": "BTCUSDT", "timestamp":get_timestamp()})
+    response01 = send_signed_request("GET",'/dapi/v1/positionRisk' , 
+        {"pair": "BTCUSD", "timestamp":get_timestamp()}
+    )
+    
+    data_list = response01
+    data_list = list( filter( lambda x : x['symbol'] == "BTCUSD_PERP", data_list ) )
 
-    data = response01
-    if data:
-        data = data[0]
-        if int(data["leverage"]) == LEVERAGE:
-            log.info( "Miss. leverage == %s" % LEVERAGE )
-            return
+    # import pdb;pdb.set_trace()
+    
+    data = data_list[0]
+    if int(data["leverage"]) == LEVERAGE:
+        log.info( "Miss. leverage == %s" % LEVERAGE ) 
+        return
 
-    response02 = send_signed_request("POST",'/fapi/v1/leverage' , {
-            "symbol": "BTCUSDT", 
+    response02 = send_signed_request("POST",'/dapi/v1/leverage' , {
+            "symbol": "BTCUSD_PERP", 
             "timestamp":get_timestamp(),
             "leverage" : int(LEVERAGE)
 
