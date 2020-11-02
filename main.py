@@ -212,6 +212,8 @@ def script():
         order_data = "symbol=XBTUSD&price={}&execInst=Close".format( price )
         
         set_order( order_data )
+        info.add_plus()
+        info.save()
         return
 
 
@@ -228,10 +230,11 @@ def script():
         order_data = "symbol=XBTUSD&price={}&execInst=Close".format( price )
         
         set_order( order_data )
+        info.add_plus()
+        info.save()
         return
 
-    info.add_plus()
-    info.save()
+
     
     # import pdb;pdb.set_trace()
 
