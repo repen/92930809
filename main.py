@@ -1,5 +1,5 @@
 import configparser, time, os, hmac, hashlib, requests
-from tools import log as lo
+from tools import log as lo, Info
 from datetime import datetime
 from urllib.parse import urlencode
 
