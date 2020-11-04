@@ -65,7 +65,7 @@ def send_public_request(url_path, payload={}):
 def get_data():
 
     response01 = send_signed_request("GET",'/dapi/v1/positionRisk' , 
-        {"pair": "BTCUSD", "timestamp":get_timestamp()}
+        {"pair": "BTCUSD"}
     )
     
     data_list = response01
@@ -80,7 +80,6 @@ def get_data():
 
     response02 = send_signed_request("POST",'/dapi/v1/leverage' , {
             "symbol": "BTCUSD_PERP", 
-            "timestamp":get_timestamp(),
             "leverage" : int(LEVERAGE)
 
     })
