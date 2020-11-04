@@ -12,7 +12,6 @@ args = config['site']
 NAME = args['name']
 TIMEOUT01 = float( args['timeout01'] )
 TIMEOUT02 = float( args['timeout02'] )
-TIMEOUT03 = float( args['timeout03'] )
 FILE01  = args['file01']
 FILE02  = args['file02']
 FILEINFO  = args['file_info']
@@ -90,7 +89,6 @@ def get_signal(path):
 def set_leverage():
     response = send_signed_request("POST",'/dapi/v1/leverage' , {
             "symbol": "BTCUSD_PERP", 
-            "timestamp":get_timestamp(),
             "leverage" : int(LEVERAGE)
 
     })
@@ -101,7 +99,6 @@ def set_order_left(quantity):
             "side": "BUY", 
             "type": "MARKET", 
             "quantity": quantity, 
-            "timestamp":get_timestamp(),
 
     })
 
@@ -110,8 +107,7 @@ def set_order_right(quantity):
             "symbol": "BTCUSD_PERP", 
             "side": "SELL", 
             "type": "MARKET", 
-            "quantity": quantity, 
-            "timestamp":get_timestamp(),
+            "quantity": quantity,
 
     })
 
@@ -122,7 +118,6 @@ def set_order_left2(stopPrice):
             "type": "TAKE_PROFIT_MARKET",
             "stopPrice": stopPrice,
             "closePosition": "true",
-            "timestamp":get_timestamp(),
 
     })
 
@@ -133,14 +128,13 @@ def set_order_right2(stopPrice):
             "type": "TAKE_PROFIT_MARKET",
             "stopPrice": stopPrice,
             "closePosition": "true",
-            "timestamp":get_timestamp(),
 
     })
 
 
 def get_avgEntryPrice():
     response = send_signed_request("GET",'/dapi/v1/positionRisk' , 
-        {"pair": "BTCUSD", "timestamp":get_timestamp()}
+        {"pair": "BTCUSD"}
     )
 
     result = list( filter(lambda x : x['symbol'] == "BTCUSD_PERP", response) )
@@ -149,7 +143,7 @@ def get_avgEntryPrice():
 
 def get_leverage():
     response = send_signed_request("GET",'/dapi/v1/positionRisk' , 
-        {"pair": "BTCUSD", "timestamp":get_timestamp()}
+        {"pair": "BTCUSD"}
     )
 
     if not response:
@@ -162,7 +156,7 @@ def get_leverage():
 
 def get_positionAmt():
     response = send_signed_request("GET",'/dapi/v1/positionRisk' , 
-        {"pair": "BTCUSD", "timestamp":get_timestamp()}
+        {"pair": "BTCUSD"}
     )
 
     result = list( filter(lambda x : x['symbol'] == "BTCUSD_PERP", response) )
@@ -266,10 +260,7 @@ def work():
 
 
 def test():
-    res = get_avgEntryPrice()
-    res = get_leverage()
-    # import pdb;pdb.set_trace()
-    # script()
+    pass
 
 if __name__ == '__main__':
     # test()
