@@ -20,8 +20,8 @@ POLL_TIMEOUT  = float( args['poll_timeout'] )
 
 log = lo( NAME, "main.log")
 
-KEY = 'qI92gUxhnMIsth8JsMYqpmCdoOXBIKYF19X1Bi3v56o3aPoNxBs4q2dFNgspgHii'
-SECRET = 'r2WZn3V14qGn8T742ozDRNUfvnwaEa5kBCghc8I9kENVwYLNY7Z9GAZD1PPZA1Yo'
+KEY = ''
+SECRET = ''
 BASE_URL = 'https://dapi.binance.com' # production base url
 
 
