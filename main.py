@@ -20,8 +20,8 @@ POLL_TIMEOUT  = float( args['poll_timeout'] )
 
 log = lo( NAME, "main.log")
 
-KEY = ''
-SECRET = ''
+KEY = 'qI92gUxhnMIsth8JsMYqpmCdoOXBIKYF19X1Bi3v56o3aPoNxBs4q2dFNgspgHii'
+SECRET = 'r2WZn3V14qGn8T742ozDRNUfvnwaEa5kBCghc8I9kENVwYLNY7Z9GAZD1PPZA1Yo'
 BASE_URL = 'https://dapi.binance.com' # production base url
 
 
@@ -163,6 +163,25 @@ def get_positionAmt():
     positionAmt = result[0]["positionAmt"]
     return int(positionAmt)
 
+def get_price(name):
+    '''
+    Получение значений по полям askPrice и bidPrice
+
+    Параметры:
+        name (str): Ожидается строка со значением askPrice или bidPrice
+    
+    Вернуть:
+        float: число в типе float
+
+    '''
+
+    response = send_signed_request("GET",'/dapi/v1/ticker/bookTicker' , 
+        {"symbol": "BTCUSD_PERP"}
+    )
+
+
+    return float(response[0][name])
+
 def script():
     positionAmt = get_positionAmt()
     
@@ -211,7 +230,9 @@ def script():
     if s1 > 0 or s2 > 0:
         log.info("Branch (signal1 > 0 or signal2 > 0)")
 
-        quantity = Fnum * 47
+        askPrice = get_price("askPrice")
+
+        quantity = int( askPrice * Fnum * 47 )
         set_order_left( quantity )
 
         entryPrice = get_avgEntryPrice()
@@ -225,7 +246,10 @@ def script():
 
     if s1 < 0 or s2 < 0:
         log.info("Branch (signal1 < 0 or signal2 < 0)")
-        quantity = Fnum * 48
+
+        bidPrice = get_price("bidPrice")
+        quantity = int(bidPrice * Fnum * 48)
+
         set_order_right( quantity )
 
         entryPrice = get_avgEntryPrice()
