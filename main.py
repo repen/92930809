@@ -13,54 +13,35 @@ LEVERAGE = int(args['leverage'])
 
 log = lo( NAME, "main.log")
 
-KEY = ''
-SECRET = ''
-BASE_URL = 'https://dapi.binance.com' # production base url
+KEY = 'O0WIAYP8jc4tLZ03dc'
+SECRET = 'MsoezA2ruNnEGoaAQNHVXAQxL2GFLcHhLtbl'
+BASE_URL = 'https://api.bybit.com' # production base url
 
 def get_timestamp():
     # 1603616154651
     # 1508396497000
     return int(time.time() * 1000)
 
-def hashing(query_string):
-    return hmac.new(SECRET.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
+# curl https://api.bybit.com/user/leverage/save \
+# -H "Content-Type: application/json" \
+# -d '{"api_key":"{api_key}","symbol":"BTCUSD","leverage":14,"timestamp":{timestamp},"sign":"{sign}"}'
 
-def dispatch_request(http_method):
-    session = requests.Session()
-    session.headers.update({
-        'Content-Type': 'application/json;charset=utf-8',
-        'X-MBX-APIKEY': KEY
-    })
-    return {
-        'GET': session.get,
-        'DELETE': session.delete,
-        'PUT': session.put,
-        'POST': session.post,
-    }.get(http_method, 'GET')
 
-def send_signed_request(http_method, url_path, payload={}):
+def get_leverage():
+    # curl "https://api.bybit.com/user/leverage?api_key={api_key}&timestamp={timestamp}&sign={sign}"
+    headers = {"Content-Type": "application/json"}
+    url = BASE_URL + "/user/leverage"
+    payload = {
+        "api_key" : KEY,
+        "sign" : SECRET,
+        "timestamp" : get_timestamp(),
+    }
     query_string = urlencode(payload, True)
-    if query_string:
-        query_string = "{}&timestamp={}".format(query_string, get_timestamp())
-    else:
-        query_string = 'timestamp={}'.format(get_timestamp())
+    response = requests.get( url + "?"+query_string )
+    print(url + "?"+query_string)
 
-    url = BASE_URL + url_path + '?' + query_string + '&signature=' + hashing(query_string)
-    log.info("{} {}".format(http_method, url))
-    params = {'url': url, 'params': {}}
-    response = dispatch_request(http_method)(**params)
-    return response.json()
-
-
-# used for sending public data request
-def send_public_request(url_path, payload={}):
-    query_string = urlencode(payload, True)
-    url = BASE_URL + url_path
-    if query_string:
-        url = url + '?' + query_string
-    log.info("{}".format(url))
-    response = dispatch_request('GET')(url=url)
-    return response.json()
+    import pdb;pdb.set_trace()
+    pass
 
 def get_data():
 
@@ -106,9 +87,10 @@ def work():
 
 
 def test():
-    res = get_data()
+    res = get_leverage()
+    print(res)
 
 if __name__ == '__main__':
-    # test()
+    test()
     # main()
-    work()
+    # work()
