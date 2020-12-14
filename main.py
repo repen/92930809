@@ -120,6 +120,7 @@ def set_order_left2(price, quantity):
             "quantity": quantity,
 
     })
+    log.info("set_order_left2: %s" % response )
 
 def set_order_right2(price, quantity ):
     response = send_signed_request("POST",'/dapi/v1/order' , {
@@ -130,6 +131,7 @@ def set_order_right2(price, quantity ):
             "quantity": quantity,
 
     })
+    log.info("set_order_right2: %s" % response )
 
 
 def get_avgEntryPrice():
