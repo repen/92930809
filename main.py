@@ -111,23 +111,23 @@ def set_order_right(quantity):
 
     })
 
-def set_order_left2(stopPrice):
+def set_order_left2(price, quantity):
     response = send_signed_request("POST",'/dapi/v1/order' , {
             "symbol": "BTCUSD_PERP",
             "side": "SELL",
-            "type": "TAKE_PROFIT_MARKET",
-            "stopPrice": stopPrice,
-            "closePosition": "true",
+            "type": "LIMIT",
+            "price": price,
+            "quantity": quantity,
 
     })
 
-def set_order_right2(stopPrice):
+def set_order_right2(price, quantity ):
     response = send_signed_request("POST",'/dapi/v1/order' , {
             "symbol": "BTCUSD_PERP",
             "side": "BUY",
-            "type": "TAKE_PROFIT_MARKET",
-            "stopPrice": stopPrice,
-            "closePosition": "true",
+            "type": "LIMIT",
+            "price": price,
+            "quantity": quantity,
 
     })
 
@@ -236,8 +236,8 @@ def script():
         set_order_left( quantity )
 
         entryPrice = get_avgEntryPrice()
-        stopPrice = int(entryPrice + (entryPrice * 0.045))
-        set_order_left2( stopPrice )
+        price = int(entryPrice + (entryPrice * 0.045))
+        set_order_left2( price, quantity )
         
         info.add_plus()
         info.save()
@@ -253,8 +253,8 @@ def script():
         set_order_right( quantity )
 
         entryPrice = get_avgEntryPrice()
-        stopPrice = int(entryPrice - (entryPrice * 0.045))
-        set_order_right2( stopPrice )
+        price = int(entryPrice - (entryPrice * 0.045))
+        set_order_right2( price, quantity )
         
         info.add_plus()
         info.save()
