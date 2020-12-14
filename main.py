@@ -102,6 +102,7 @@ def set_order_left(quantity):
 
     })
     log.info("set_order_left: %s" % response )
+    log.info("set_order_left params: %s" % [quantity] )
 
 def set_order_right(quantity):
     response = send_signed_request("POST",'/dapi/v1/order' , {
@@ -112,6 +113,7 @@ def set_order_right(quantity):
 
     })
     log.info("set_order_right: %s" % response )
+    log.info("set_order_right params: %s" % [quantity] )
 
 def set_order_left2(price, quantity):
     response = send_signed_request("POST",'/dapi/v1/order' , {
@@ -123,6 +125,7 @@ def set_order_left2(price, quantity):
 
     })
     log.info("set_order_left2: %s" % response )
+    log.info("set_order_left2 params: %s" % [price, quantity] )
 
 def set_order_right2(price, quantity ):
     response = send_signed_request("POST",'/dapi/v1/order' , {
@@ -134,6 +137,7 @@ def set_order_right2(price, quantity ):
 
     })
     log.info("set_order_right2: %s" % response )
+    log.info("set_order_right2 params: %s" % [price, quantity] )
 
 
 def get_avgEntryPrice():
