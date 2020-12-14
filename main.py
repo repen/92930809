@@ -122,6 +122,7 @@ def set_order_left2(price, quantity):
             "type": "LIMIT",
             "price": price,
             "quantity": quantity,
+            "timeInForce": "GTC"
 
     })
     log.info("set_order_left2: %s" % response )
@@ -134,6 +135,7 @@ def set_order_right2(price, quantity ):
             "type": "LIMIT",
             "price": price,
             "quantity": quantity,
+            "timeInForce": "GTC"
 
     })
     log.info("set_order_right2: %s" % response )
