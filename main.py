@@ -45,12 +45,12 @@ def get_signal(path):
 
 def set_leverage(number):
     data = client.Positions.Positions_saveLeverage(symbol="BTCUSD", leverage="{}".format(number)).result()
-    log.info( "set_leverage: %s" % data )
+    log.info( "set_leverage: %d" % number )
     return data
 
 def set_order(order):
     data = client.Order.Order_new(**order).result()
-    log.info( "set_order: %s" % data )
+    log.info( "Set_order: {}".format( order ) )
 
 def get_avgEntryPrice():
     data=client.Positions.Positions_myPosition(symbol="BTCUSD").result()
