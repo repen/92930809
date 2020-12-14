@@ -101,6 +101,7 @@ def set_order_left(quantity):
             "quantity": quantity, 
 
     })
+    log.info("set_order_left: %s" % response )
 
 def set_order_right(quantity):
     response = send_signed_request("POST",'/dapi/v1/order' , {
@@ -110,6 +111,7 @@ def set_order_right(quantity):
             "quantity": quantity,
 
     })
+    log.info("set_order_right: %s" % response )
 
 def set_order_left2(price, quantity):
     response = send_signed_request("POST",'/dapi/v1/order' , {
