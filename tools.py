@@ -37,23 +37,15 @@ def log(*args, **kwargs):
     return logger
 
 
-def generate_signature(secret, verb, url, nonce, data):
-    """Generate a request signature compatible with BitMEX."""
-    # Parse the url so we can remove the base and extract just the path.
-    parsedURL = urlparse(url)
-    path = parsedURL.path
-    if parsedURL.query:
-        path = path + '?' + parsedURL.query
-
-    if isinstance(data, (bytes, bytearray)):
-        data = data.decode('utf8')
-
-    # print "Computing HMAC: %s" % verb + path + str(nonce) + data
-    message = verb + path + str(nonce) + data
-
-    signature = hmac.new(bytes(secret, 'utf8'), bytes(message, 'utf8'), digestmod=hashlib.sha256).hexdigest()
-    return signature
-
+def get_signature(secret: str, req_params: dict):
+    """
+    :param secret    : str, your api-secret
+    :param req_params: dict, your request params
+    :return: signature
+    """
+    _val = '&'.join([str(k)+"="+str(v) for k, v in sorted(req_params.items()) if (k != 'sign') and (v is not None)])
+    # print(_val)
+    return str(hmac.new(bytes(secret, "utf-8"), bytes(_val, "utf-8"), digestmod="sha256").hexdigest())
 
 
 class Info:

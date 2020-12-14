@@ -1,8 +1,8 @@
-import configparser, time, re
-from requests.auth import AuthBase
+import configparser, time
 from tools import log as lo
-from tools import generate_signature, Info
-import requests
+from tools import Info
+import bybit
+
 config = configparser.ConfigParser()
 config.read('setting.conf')
 
@@ -21,37 +21,12 @@ POLL_TIMEOUT  = float( args['poll_timeout'] )
 
 log = lo( NAME, "main.log")
 
-apiKey = "BBDLor4hAF9Aplqp62oNCK-q"
-apiSecret = "ay5rZbB_aYeMQ4R9IIbbr777oxL6CdeXVHUTcz6451hY1nX5"
-
-POST_HEADERS = {
-    "Content-Type": "application/x-www-form-urlencoded",
-    'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-}
+KEY = ''
+SECRET = ''
+BASE_URL = 'https://api.bybit.com' # production base url
 
 
-class APIKeyAuthWithExpires(AuthBase):
-
-    """Attaches API Key Authentication to the given Request object. This implementation uses `expires`."""
-
-    def __init__(self, apiKey, apiSecret):
-        """Init with Key & Secret."""
-        self.apiKey = apiKey
-        self.apiSecret = apiSecret
-
-    def __call__(self, r):
-        """
-        Called when forming a request - generates api key headers. This call uses `expires` instead of nonce.
-        This way it will not collide with other processes using the same API Key if requests arrive out of order.
-        For more details, see https://www.bitmex.com/app/apiKeys
-        """
-        # modify and return the request
-        expires = int(round(time.time()) + 5)  # 5s grace period in case of clock skew
-        r.headers['api-expires'] = str(expires)
-        r.headers['api-key'] = self.apiKey
-        r.headers['api-signature'] = generate_signature(self.apiSecret, r.method, r.url, expires, r.body or '')
-        return r
+client  = bybit.bybit(test=False, api_key=KEY, api_secret=SECRET)
 
 def get_signal(path):
     while True:
@@ -68,91 +43,45 @@ def get_signal(path):
             time.sleep(0.1)
     return result
 
-def set_leverage():
-    URL = "https://testnet.bitmex.com/api/v1/position/leverage"
-    
-    set_data = "symbol=XBTUSD&leverage={}".format( LEVERAGE )
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-    }
-    
-    response = requests.post( URL, 
-        data=set_data, headers=headers, auth=APIKeyAuthWithExpires(apiKey, apiSecret), 
-        timeout=2.001
-    )
-    log.info( "response {}. Url: {} ".format( response, URL) )
-    return response
+def set_leverage(number):
+    data = client.Positions.Positions_saveLeverage(symbol="BTCUSD", leverage="{}".format(number)).result()
+    log.info( "set_leverage: %s" % data )
+    return data
 
-def set_order(order_data):
-    URL = "https://testnet.bitmex.com/api/v1/order"
-    response  = requests.post( URL, data=order_data, headers=POST_HEADERS, 
-        auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001
-    )
-    log.info( "response {}. Url:  {}".format( response, URL) )
-    return response
+def set_order(order):
+    data = client.Order.Order_new(**order).result()
+    log.info( "set_order: %s" % data )
 
 def get_avgEntryPrice():
-    URL = "https://testnet.bitmex.com/api/v1/position?filter=%7B%22symbol%22%3A%20%22XBTUSD%22%7D&columns=%5B%22avgEntryPrice%22%5D"
-    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
-    log.info( "response {}. Url: {}".format( response, URL) )
-    data = response.json()
-    avgEntryPrice = data[0]['avgEntryPrice']
+    data=client.Positions.Positions_myPosition(symbol="BTCUSD").result()
+    log.info( "get_avgEntryPrice: %s" % data[0]["result"]["entry_price"] )
+    return float( data[0]["result"]["entry_price"] )
 
-    return avgEntryPrice
-
-def get_askPrice():
-    URL = "https://testnet.bitmex.com/api/v1/instrument?symbol=XBT%3Aperpetual&columns=%5B%22askPrice%22%5D&reverse=false"
-    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
-    log.info( "response {}. Url: {}".format( response, URL) )
-    data = response.json()
-    askPrice = data[0]['askPrice']
-    return askPrice
-
-def get_bidPrice():
-    URL = "https://testnet.bitmex.com/api/v1/instrument?symbol=XBT%3Aperpetual&columns=%5B%22bidPrice%22%5D&reverse=false"
-    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
-    log.info( "response {}. Url: {}".format( response, URL) )
-    data = response.json()
-    bidPrice = data[0]['bidPrice']
-    return bidPrice
+def getOrderBook(side):
+    # Уточнить какие значения нужны. Возвращается список прайсов.
+    data = client.Market.Market_orderbook(symbol="BTCUSD").result()
+    select = list( filter( lambda x: x["side"] == side , data[0]["result"]) )
+    log.info( "getOrderBook %s: %s" % ( side, select ) )
+    return float( select[0]["price"] )
 
 def get_leverage():
-    URL = "https://testnet.bitmex.com/api/v1/position?filter=%7B%22symbol%22%3A%20%22XBTUSD%22%7D&columns=%5B%22leverage%22%5D"
-    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
-    log.info( "response {}. Url: {}".format( response, URL) )
-    data = response.json()
+    data = client.Positions.Positions_myPosition(symbol="BTCUSD").result()
+    log.info( "get_leverage: %s" % data[0]["result"]["leverage"] )
+    return int( data[0]["result"]["leverage"] )
 
-    if not data:
-        return -1
 
-    leverage = data[0]['leverage']
-    return leverage
+def get_Size():
+    data = client.Positions.Positions_myPosition(symbol="BTCUSD").result()
+    log.info( "get_Size: %s" % data[0]["result"]["size"] )
+    return int(data[0]["result"]["size"])
 
-def get_currentQty():
-    URL = "https://testnet.bitmex.com/api/v1/position?filter=%7B%22symbol%22%3A%20%22XBTUSD%22%7D&columns=%5B%22currentQty%22%5D"
-    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
-    log.info( "response {}. Url: {}".format( response, URL) )
-    log.info( "response {} limit: {}".format( response, response.headers["X-RateLimit-Remaining"] ) )
-    data = response.json()
-    currentQty = data[0]['currentQty']
-    return currentQty
-
-def get_position():
-    URL = "https://testnet.bitmex.com/api/v1/execution?symbol=XBT%3Aperpetual&columns=%5B%22text%22%5D&count=1&reverse=true"
-    response  = requests.get( URL, auth=APIKeyAuthWithExpires(apiKey, apiSecret), timeout=2.001)
-    log.info( "response {}. Url: {}".format( response, URL) )
-    data = response.json()
-    text =  data[0]['text']
-    return text
 
 def script():
-    currentQty = get_currentQty()
+    Size = get_Size()
     
     # import pdb;pdb.set_trace()
-    log.info( "currentQty = {}".format( currentQty ) )
-    if currentQty != 0:
+    log.info( "Size = {}".format( Size ) )
+    if Size != 0:
         time.sleep( TIMEOUT01 )
         log.info( "Sleep: {}".format( TIMEOUT01 ) )
         return
@@ -160,25 +89,17 @@ def script():
 
     info = Info( FILEINFO )
     log.info("Load file %s \n data: %s", FILEINFO, info)
-    
-    position = get_position()
-    log.info( "Get_position: {}".format( position ) )
-    if position == "Liquidation":
-        log.info( "Sleep: {}".format( TIMEOUT03 ) )
+
+    if info.length_plus() == 5:
         info.clear_plus()
         info.save()
-        time.sleep(TIMEOUT03)
-    else:
-        if info.length_plus() == 5:
-            info.clear_plus()
-            info.save()
 
-        log.info( "Sleep: {}".format( TIMEOUT02 ) )
-        time.sleep(TIMEOUT02)
+    log.info( "Sleep: {}".format( TIMEOUT02 ) )
+    time.sleep(TIMEOUT02)
     # ==========
 
 
-    
+
     # читать файлы с сигналами N 0 -N
     while True:
         s1 = get_signal(FILE01)
@@ -191,27 +112,32 @@ def script():
 
     log.info( "signal1: {} | signal2: {}".format( s1,s2 ) )
     #проверить плечо
-    leverage = get_leverage()    
+    leverage = get_leverage()
     if leverage != 50:
-        set_leverage()
+        set_leverage(50)
         log.info("Set leverage 50")
 
     Fnum = info.get_num()
 
     if s1 > 0 or s2 > 0:
         log.info("Branch askPrice (signal1 > 0 or signal2 > 0)")
-        askPrice   = get_askPrice()
+        leftPrice   = getOrderBook("Sell")
 
-        orderQty   = int(askPrice * Fnum * 47)
-        order_data = "symbol=XBTUSD&side=Buy&orderQty={}&ordType=Market".format( orderQty )
+        orderQty   = int(leftPrice * Fnum * 47)
 
-        set_order( order_data )
+        set_order({
+            "side": "Buy", "symbol" : "BTCUSD", "order_type" : "Market", 
+            "qty":orderQty, "time_in_force": "FillOrKill"
+        })
 
-        avgEntryPrice = get_avgEntryPrice()
-        price = int(avgEntryPrice + (avgEntryPrice * 0.045))
-        order_data = "symbol=XBTUSD&price={}&execInst=Close".format( price )
-        
-        set_order( order_data )
+        entry_price = get_avgEntryPrice()
+        price = int(entry_price + (entry_price * 0.045))
+ 
+        set_order({
+            "side" : "Sell", "symbol" : "BTCUSD", "order_type" : "Limit", 
+            "qty" : orderQty, "price":price, "time_in_force":"GoodTillCancel"
+        })
+
         info.add_plus()
         info.save()
         return
@@ -219,17 +145,22 @@ def script():
 
     if s1 < 0 or s2 < 0:
         log.info("Branch bidPrice (signal1 < 0 or signal2 < 0)")
-        bidPrice = get_bidPrice()
-        orderQty = int(bidPrice * Fnum * 48)
-        order_data = "symbol=XBTUSD&side=Sell&orderQty={}&ordType=Market".format( orderQty )
-        
-        set_order( order_data )
+        rightPrice = getOrderBook("Buy")
+        orderQty = int(rightPrice * Fnum * 48)
 
-        avgEntryPrice = get_avgEntryPrice()
-        price = int(avgEntryPrice - (avgEntryPrice * 0.057))
-        order_data = "symbol=XBTUSD&price={}&execInst=Close".format( price )
+        set_order({
+            "side": "Sell", "symbol" : "BTCUSD", "order_type" : "Market", 
+            "qty":orderQty, "time_in_force": "FillOrKill"
+        })
+
+        entry_price = get_avgEntryPrice()
+        price = int(entry_price - (entry_price * 0.057))
         
-        set_order( order_data )
+        set_order({
+            "side" : "Buy", "symbol" : "BTCUSD", "order_type" : "Limit", 
+            "qty" : orderQty, "price":price, "time_in_force":"GoodTillCancel"
+        })
+
         info.add_plus()
         info.save()
         return
@@ -259,6 +190,7 @@ def work():
 
 def test():
     script()
+    # getOrderBook("Buy")
 
 if __name__ == '__main__':
     # test()
