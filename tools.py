@@ -16,7 +16,7 @@ def log(*args, **kwargs):
         ch = logging.StreamHandler()
     else:
         # log write in disk
-        ch = logging.FileHandler("/".join( [ os.getcwd(), path_file] ))
+        ch = logging.FileHandler(os.path.join( os.getcwd(), path_file) )
 
     ch.setLevel(logging.DEBUG)
 
