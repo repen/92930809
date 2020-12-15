@@ -32,7 +32,7 @@ def get_timestamp():
 def get_leverage():
     result = futureAPI.get_leverage("BTC-USD")
     log.info("Get: leverage = {}".format( result ))
-    return int(result['leverage'])
+    return float(result['leverage'])
 
 def set_leverage(number):
     result = futureAPI.set_leverage("BTC-USD", number)
